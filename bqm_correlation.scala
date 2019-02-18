@@ -55,3 +55,17 @@ println("Pearson correlation matrix:\n" + coeff1.toString)
 
 val Row(coeff2: Matrix) = Correlation.corr(assembler_hr, "features", "spearman").head
 println("Spearman correlation matrix:\n" + coeff2.toString)
+
+
+// Fatigue and Intensity Correlation
+
+val df_no_bmq = sqlContext.read.format("jdbc").option("url", "jdbc:mysql://13.56.49.220:3306/beast_mode_db").option("driver", "com.mysql.jdbc.Driver").option("dbtable", "(select DATE_FORMAT(date(h.diary_day), \"%Y-%m-%d\") as date_recorded, a.duration, a.distance, a.avg_hr as avg_activity_hr, a.avg_pace, h.TOTAL_CALORIES_OUT, h.STEPS, h.REST_HR, s.TOTAL_MINUTES_ASLEEP, s.WAKE_MINUTES from ACTIVITY_HISTORY a, HEALTH_HISTORY h, SLEEP_HISTORY s where  DATE_FORMAT(date(h.diary_day), \"%Y-%m-%d\") = date_sub(DATE_FORMAT(date(a.START_TIME), \"%Y-%m-%d\"), INTERVAL 1 DAY)  and DATE_FORMAT(date(h.diary_day), \"%Y-%m-%d\") = DATE_FORMAT(date(h.diary_day), \"%Y-%m-%d\")) tmp").option("user", "bmq_user").option("password", "Be@stM0de").load()
+//df_hr.show()
+
+val assembler_no_bmq  = new VectorAssembler().setInputCols(Array( "duration","distance","avg_activity_hr","avg_pace","TOTAL_CALORIES_OUT","STEPS","REST_HR","TOTAL_MINUTES_ASLEEP","WAKE_MINUTES")).setOutputCol("features").transform(df_no_bmq)
+
+val Row(coeff1: Matrix) = Correlation.corr(assembler_no_bmq, "features").head
+println("Pearson correlation matrix:\n" + coeff1.toString(9,Int.MaxValue))
+
+val Row(coeff2: Matrix) = Correlation.corr(assembler_no_bmq, "features", "spearman").head
+println("Spearman correlation matrix:\n" + coeff2.toString(9,Int.MaxValue))
